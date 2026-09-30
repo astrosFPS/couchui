@@ -1,0 +1,56 @@
+:root {
+  /* Accent colors are intentionally theme-independent — previously each
+     theme had its own slightly different shade, which meant the same
+     accent visibly shifted hue/brightness when switching Dark/Light. One
+     definition here means there's nothing left to drift apart. */
+  --focus: #E8A33D;
+  --danger: #E05555;
+  --safe: #7ED17E;
+}
+
+:root,
+:root[data-theme="dark"] {
+  --bg: #14161C;
+  --bg-rgb: 20, 22, 28;
+  --surface: #1D2027;
+  --surface-hover: #262A33;
+  --border: #3A3D46;
+  --text-theme: #F2EFE9;
+  --text-dim-theme: #A9A69C;
+  /* --user-text-color / --user-text-dim-color come ONLY from an explicit
+     Settings → Appearance → Font color — feeds --text/--text-dim, used by
+     tiles, buttons, the power menu, etc. Those all sit on their own opaque
+     --surface panel, which is always theme-consistent regardless of any
+     custom page background, so this is deliberately NOT affected by the
+     background auto-contrast color below. */
+  --text: var(--user-text-color, var(--text-theme));
+  --text-dim: var(--user-text-dim-color, var(--text-dim-theme));
+  /* --bg-auto-text-color/-dim come ONLY from the solid-background
+     auto-contrast calculation (applyFont() in renderer.js) — feeds
+     --bg-text/--bg-text-dim, used only by text sitting directly on the
+     raw page background (clock, weather, footer hints, etc.), which is
+     the only text actually affected by a custom background color. */
+  --bg-text: var(--bg-auto-text-color, var(--text));
+  --bg-text-dim: var(--bg-auto-text-dim-color, var(--text-dim));
+}
+
+:root[data-theme="light"] {
+  --bg: #EEF0F3;
+  --bg-rgb: 238, 240, 243;
+  --surface: #FFFFFF;
+  --surface-hover: #E7EAF0;
+  --border: #D3D7DE;
+  /* Darker and less gray than the original #1B1D22/#5B6270 — those read as
+     a washed-out charcoal rather than a crisp near-black. */
+  --text-theme: #0B0C0F;
+  --text-dim-theme: #454A54;
+  --text: var(--user-text-color, var(--text-theme));
+  --text-dim: var(--user-text-dim-color, var(--text-dim-theme));
+  --bg-text: var(--bg-auto-text-color, var(--text));
+  --bg-text-dim: var(--bg-auto-text-dim-color, var(--text-dim));
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+}

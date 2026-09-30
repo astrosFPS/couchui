@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CouchUI</title>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="fonts.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-layer" id="bg-layer-a"></div>
+  <div class="bg-layer" id="bg-layer-b"></div>
+  <div class="frame">
+    <header class="topbar">
+      <div class="clock" id="clock">
+        <span class="clock-time" id="clock-time">--:--</span>
+        <span class="clock-date" id="clock-date">-- --- --</span>
+      </div>
+      <div class="topright">
+        <div class="weather" id="weather">
+          <span class="weather-condition" id="weather-condition"></span>
+          <span class="weather-temp" id="weather-temp">--°</span>
+          <span class="weather-place" id="weather-place">Locating…</span>
+        </div>
+        <div class="icon-row">
+          <button class="icon-btn" id="settings-btn" aria-label="Settings" title="Settings">⚙</button>
+          <div class="power-wrap" id="power-wrap">
+            <button class="icon-btn" id="power-btn" aria-label="Power menu">⏻</button>
+            <div class="power-menu" id="power-menu">
+              <div class="power-menu-item" data-action="exit" tabindex="0">
+                <span class="power-menu-label">Exit to Desktop</span>
+              </div>
+              <div class="power-menu-item" data-action="restart" tabindex="0">
+                <span class="power-menu-label">Restart System</span>
+              </div>
+              <div class="power-menu-item" data-action="shutdown" tabindex="0">
+                <span class="power-menu-label">Shutdown System</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="view-heading" id="view-heading" hidden>
+      <span id="view-title"></span>
+    </div>
+
+    <main class="tiles" id="tiles"></main>
+
+    <div class="now-playing" id="now-playing">
+      <img class="now-playing-art" id="now-playing-art" alt="" />
+      <div class="now-playing-info">
+        <div class="now-playing-progress">
+          <div class="now-playing-progress-fill" id="np-progress-fill"></div>
+        </div>
+        <span class="now-playing-track" id="now-playing-track"></span>
+        <span class="now-playing-artist" id="now-playing-artist"></span>
+      </div>
+      <div class="now-playing-controls">
+        <button class="np-btn" id="np-volume" title="Volume">🔊</button>
+        <button class="np-btn" id="np-shuffle" title="Shuffle (X)">🔀</button>
+        <button class="np-btn" id="np-prev" title="Previous (LB)">⏮</button>
+        <button class="np-btn" id="np-toggle" title="Play/Pause (Y)">⏸</button>
+        <button class="np-btn" id="np-next" title="Next (RB)">⏭</button>
+      </div>
+    </div>
+
+    <footer class="hints">
+      <span><span class="key">D-Pad</span> Move</span>
+      <span><span class="key">A</span> Select</span>
+      <span><span class="key">B</span> Back</span>
+      <span><span class="key">X</span> Pin / Queue / Shuffle</span>
+      <span><span class="key">Y</span> Play/Pause</span>
+      <span><span class="key">LB/RB</span> Prev/Next</span>
+      <span><span class="key">Start</span> Power</span>
+      <span id="pad-status" class="pad-status">No controller detected</span>
+    </footer>
+
+    <div class="volume-popup" id="volume-popup">
+      <span class="volume-icon" id="volume-icon">🔊</span>
+      <div class="volume-track"><div class="volume-fill" id="volume-fill"></div></div>
+      <span class="volume-value" id="volume-value">—</span>
+      <span class="volume-hint">◀ ▶ adjust · B to close</span>
+    </div>
+
+    <div class="keyboard" id="keyboard">
+      <div class="keyboard-preview" id="keyboard-preview"></div>
+      <div class="keyboard-keys"></div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

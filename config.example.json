@@ -1,0 +1,104 @@
+{
+  "weather": {
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "locationName": "London",
+    "units": "celsius"
+  },
+  "spotify": {
+    "clientId": "YOUR_SPOTIFY_CLIENT_ID",
+    "redirectUri": "http://127.0.0.1:8888/callback",
+    "launchCommand": "spotify"
+  },
+  "tiles": [
+    {
+      "id": "brave",
+      "label": "Brave",
+      "subtitle": "Browser",
+      "command": "brave",
+      "args": [],
+      "color": "#E8622C",
+      "icon": "browser"
+    },
+    {
+      "id": "web-menu",
+      "label": "Web",
+      "subtitle": "Browser shortcuts",
+      "type": "submenu",
+      "color": "#E8622C",
+      "icon": "browser",
+      "tiles": [
+        {
+          "id": "youtube",
+          "label": "YouTube",
+          "subtitle": "TV interface",
+          "type": "web",
+          "url": "https://www.youtube.com/tv",
+          "color": "#FF0000"
+        },
+        {
+          "id": "netflix",
+          "label": "Netflix",
+          "subtitle": "Streaming",
+          "type": "web",
+          "url": "https://www.netflix.com",
+          "color": "#E50914"
+        },
+        {
+          "id": "twitch",
+          "label": "Twitch",
+          "subtitle": "Live",
+          "type": "web",
+          "url": "https://www.twitch.tv",
+          "color": "#9146FF"
+        }
+      ]
+    },
+    {
+      "id": "spotify-hub",
+      "label": "Spotify",
+      "subtitle": "Music",
+      "type": "spotify-hub",
+      "color": "#1DB954",
+      "icon": "spotify"
+    },
+    {
+      "id": "kodi",
+      "label": "Movies",
+      "subtitle": "Kodi",
+      "command": "flatpak",
+      "args": [
+        "run",
+        "tv.kodi.Kodi"
+      ],
+      "color": "#17B2E7",
+      "icon": "movie"
+    },
+    {
+      "id": "moonlight",
+      "label": "Games",
+      "subtitle": "Moonlight stream",
+      "command": "flatpak",
+      "args": [
+        "run",
+        "com.moonlight_stream.Moonlight"
+      ],
+      "color": "#6C5CE7",
+      "icon": "controller"
+    },
+    {
+      "id": "waydroid-hub",
+      "label": "Android Apps",
+      "subtitle": "Waydroid",
+      "type": "waydroid-hub",
+      "color": "#2D9CDB",
+      "prelaunch": "waydroid session start"
+    }
+  ],
+  "web": {
+    "command": "brave",
+    "args": [
+      "--start-fullscreen"
+    ]
+  }
+}

@@ -1,0 +1,66 @@
+/* Shipped fonts (all SIL Open Font License 1.1 — see assets/fonts/<name>/LICENSE.txt).
+   Prefixed with "CL " so these never collide with a same-named font that
+   might already be installed on the system — the launcher always gets
+   exactly the shipped file, not a system substitute with different metrics.
+   Nothing here changes the app's default font by itself — it's only
+   applied when the user picks one in Settings → Appearance. */
+
+@font-face {
+  font-family: 'CL Roboto';
+  src: url('../assets/fonts/roboto/roboto-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'CL Roboto';
+  src: url('../assets/fonts/roboto/roboto-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'CL Open Sans';
+  src: url('../assets/fonts/open-sans/open-sans-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'CL Open Sans';
+  src: url('../assets/fonts/open-sans/open-sans-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'CL Merriweather';
+  src: url('../assets/fonts/merriweather/merriweather-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'CL Merriweather';
+  src: url('../assets/fonts/merriweather/merriweather-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'CL JetBrains Mono';
+  src: url('../assets/fonts/jetbrains-mono/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'CL JetBrains Mono';
+  src: url('../assets/fonts/jetbrains-mono/jetbrains-mono-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

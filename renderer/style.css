@@ -1,0 +1,755 @@
+@font-face {
+  font-family: 'Inter';
+  src: local('Inter');
+}
+
+* { box-sizing: border-box; }
+
+/* ---- no native scrollbars, anywhere in the launcher ----
+   This is a kiosk UI driven by a controller from across the room: there's
+   no pointer to grab a scrollbar with, and the native one renders as a
+   bright white strip that fights every theme and custom background.
+   Scrolling still works (the D-Pad scrolls focus into view); where a
+   position indicator is genuinely useful, use the floating .row-scrollbar
+   pattern further down instead. Applies to every element so a new
+   scrolling container can't reintroduce one by accident. */
+* {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;        /* legacy Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none;                    /* Chromium / WebKit */
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  /* var(--user-font-family) is set from Settings → Appearance → Font.
+     Unset by default, so this is exactly the previous font stack until the
+     user picks something — nothing changes unless they ask for it. */
+  font-family: var(--user-font-family, 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif);
+  overflow: hidden;
+  user-select: none;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+/* Custom background (color / image / slideshow): two stacked, crossfading
+   layers behind .frame — see renderer.js applyBackground(). For 'color'
+   mode, body's own background-color is used directly and these stay empty. */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity var(--bg-fade-duration, 2s) ease;
+}
+
+.frame {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 48px 64px;
+  background: var(--bg);
+  transition: background 150ms ease;
+}
+
+/* A custom background (any of the three modes) replaces the plain themed
+   backdrop, so .frame only needs a light scrim for text legibility — not
+   the theme's near-opaque color, which is what was washing the picture out
+   ("white-out") whenever light theme was selected alongside it. The scrim
+   is intentionally low-opacity and theme-tinted (dark theme still nudges
+   toward a dark scrim, light theme toward a light one) so it still gently
+   supports contrast without hiding the background underneath. */
+body.has-custom-bg .frame {
+  background: rgba(var(--bg-rgb), 0.28);
+}
+
+/* Text that sits directly on the raw background (not inside an opaque tile)
+   gets a soft shadow as a legibility safety net, since a low-opacity scrim
+   alone can't guarantee contrast against an arbitrary photo. */
+body.has-custom-bg .clock-time,
+body.has-custom-bg .clock-date,
+body.has-custom-bg .weather-condition,
+body.has-custom-bg .weather-temp,
+body.has-custom-bg .weather-place,
+body.has-custom-bg .view-heading,
+body.has-custom-bg .hints,
+body.has-custom-bg .tile-row-title {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+
+/* When a sampled region is too visually busy for any single text color to
+   work across it (high luminance variance — see BG_HIGH_VARIANCE in
+   renderer.js), the color choice alone can't make that text readable, so
+   lean harder on the shadow for that region instead of pretending it's
+   solved. */
+body.bg-uncertain-topleft .clock-time,
+body.bg-uncertain-topleft .clock-date,
+body.bg-uncertain-topright .weather-condition,
+body.bg-uncertain-topright .weather-temp,
+body.bg-uncertain-topright .weather-place,
+body.bg-uncertain-bottom .hints {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.7);
+}
+
+/* ---- top bar ---- */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.weather, .clock {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.weather { text-align: right; }
+
+/* Clock (top-left region) and weather (top-right region) are sampled
+   separately, so they get their own color variables rather than sharing
+   one — a photo can easily be dark on one side and bright on the other. */
+.weather-condition {
+  font-size: calc(22px * var(--user-font-scale, 1));
+  margin-bottom: 2px;
+  color: var(--bg-text-topright, var(--bg-text));
+}
+
+.weather-temp {
+  font-size: calc(40px * var(--user-font-scale, 1));
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--bg-text-topright, var(--bg-text));
+}
+
+.clock-time {
+  font-size: calc(40px * var(--user-font-scale, 1));
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--bg-text-topleft, var(--bg-text));
+}
+
+.weather-place {
+  margin-top: 6px;
+  font-size: calc(18px * var(--user-font-scale, 1));
+  font-weight: 400;
+  color: var(--bg-text-topright-dim, var(--bg-text-dim));
+}
+
+.clock-date {
+  margin-top: 6px;
+  font-size: calc(18px * var(--user-font-scale, 1));
+  font-weight: 400;
+  color: var(--bg-text-topleft-dim, var(--bg-text-dim));
+}
+
+.topright {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+/* ---- icon buttons (settings cog + power) ---- */
+.icon-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.power-wrap {
+  position: relative;
+}
+
+.icon-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: calc(22px * var(--user-font-scale, 1));
+  line-height: 1;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 120ms ease, transform 120ms ease, background 120ms ease;
+}
+
+.icon-btn:hover,
+.icon-btn.focused {
+  border-color: var(--focus);
+  transform: scale(1.08);
+  background: var(--surface-hover);
+}
+
+.power-menu {
+  display: none;
+  position: absolute;
+  top: 62px;
+  right: 0;
+  z-index: 20;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 10px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 240px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+}
+
+.power-menu.open {
+  display: flex;
+}
+
+.power-menu-item {
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: calc(17px * var(--user-font-scale, 1));
+  cursor: pointer;
+  outline: none;
+  border: 2px solid transparent;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.power-menu-item.focused {
+  border-color: var(--focus);
+  background: var(--surface-hover);
+}
+
+.power-menu-item.confirming .power-menu-label::after {
+  content: ' — press A again to confirm';
+  color: var(--focus);
+  font-size: calc(14px * var(--user-font-scale, 1));
+}
+
+.power-menu-item[data-action="shutdown"].focused,
+.power-menu-item[data-action="restart"].focused {
+  border-color: var(--danger);
+}
+
+/* ---- sub-view heading (e.g. Android Apps) ---- */
+.view-heading {
+  margin-top: 32px;
+  font-size: calc(22px * var(--user-font-scale, 1));
+  color: var(--bg-text-dim);
+}
+
+/* ---- tile grid ---- */
+.tiles {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px;
+  align-content: center;
+  margin-top: 48px;
+}
+
+.tile {
+  position: relative;
+  border-radius: 18px;
+  padding: 32px 28px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: var(--surface);
+  border: 3px solid transparent;
+  outline: none;
+  cursor: pointer;
+  /* Without this, a grid item refuses to shrink below its content's
+     min-content width, so a long tile label pushes its column wider than
+     the 1fr share and the row overflows the screen. */
+  min-width: 0;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.tile::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  border-radius: 18px 18px 0 0;
+  background: var(--accent, var(--focus));
+  opacity: 0.85;
+}
+
+.tile-label {
+  font-size: calc(26px * var(--user-font-scale, 1));
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.tile-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 14px;
+  color: var(--accent, var(--focus));
+}
+
+.tile-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tile-subtitle {
+  margin-top: 4px;
+  font-size: calc(15px * var(--user-font-scale, 1));
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tile.focused {
+  transform: scale(1.06);
+  border-color: var(--focus);
+  background: var(--surface-hover);
+}
+
+.tile.has-image {
+  padding: 0;
+  overflow: hidden;
+  justify-content: flex-start;
+}
+
+.tile-art {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--surface-hover);
+  flex-shrink: 0;
+}
+
+.tile-text {
+  padding: 14px 16px 16px;
+  background: var(--surface);
+  /* Fixed regardless of title length — a long, 2-line-clamped title and a
+     short one-line title now take up the same amount of room, so tiles in
+     the same row stay a uniform height instead of one long title
+     stretching every tile in the row to match it. */
+  min-height: 100px;
+}
+
+.tile.has-image.focused .tile-text {
+  background: var(--surface-hover);
+}
+
+.tile.launching {
+  opacity: 0.55;
+}
+
+/* ---- now playing bar (Spotify) ----
+   Floating overlay, not part of the layout flow — it drops in when
+   something's actually playing and fades back out shortly after you pause,
+   instead of permanently reserving space at the bottom of the screen. */
+.now-playing {
+  position: fixed;
+  left: 50%;
+  bottom: 110px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(480px, calc(100vw - 64px));
+  padding: 12px 18px;
+  background: var(--surface);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 16px);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.now-playing.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.now-playing-art {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--surface-hover);
+}
+
+.now-playing-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.now-playing-progress {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+/* The fill is full-width and scaled horizontally rather than having its
+   `width` animated. Animating width forces a layout + repaint every frame,
+   which on a 3px-tall bar produced a visible unpainted seam partway along
+   it — the fill appeared split into two pieces with the track showing
+   through the gap. transform is composited on the GPU with no repaint, so
+   there's nothing to tear. */
+.now-playing-progress-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--focus);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1s linear;
+  will-change: transform;
+}
+
+/* ---- volume popup (Spotify) ----
+   Sits directly above the Now Playing bar and takes input focus until
+   dismissed, so left/right adjust volume rather than moving tile focus. */
+.volume-popup {
+  position: fixed;
+  left: 50%;
+  bottom: 190px;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  width: min(360px, calc(100vw - 64px));
+  background: var(--surface);
+  border-radius: 14px;
+  border: 2px solid var(--focus);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 10px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.volume-popup.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.volume-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.volume-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.volume-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--focus);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 120ms ease;
+}
+
+.volume-value {
+  min-width: 48px;
+  text-align: right;
+  font-size: calc(16px * var(--user-font-scale, 1));
+  font-weight: 600;
+  color: var(--text);
+}
+
+.volume-hint {
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.now-playing-track {
+  font-size: calc(15px * var(--user-font-scale, 1));
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.now-playing-artist {
+  font-size: calc(13px * var(--user-font-scale, 1));
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.now-playing-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.np-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: calc(16px * var(--user-font-scale, 1));
+  cursor: pointer;
+}
+
+.np-btn:hover {
+  border-color: var(--focus);
+}
+
+/* ---- footer hints ---- */
+.hints {
+  flex-shrink: 0;
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  color: var(--bg-text-bottom-dim, var(--bg-text-dim));
+  font-size: calc(15px * var(--user-font-scale, 1));
+  margin-top: 24px;
+}
+
+.key {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  color: var(--bg-text-bottom, var(--bg-text));
+  font-size: calc(13px * var(--user-font-scale, 1));
+}
+
+.pad-status {
+  margin-left: auto;
+}
+
+.pad-status.connected {
+  color: var(--safe);
+}
+
+/* ---- tile rows (Spotify home: horizontal scrolling sections) ---- */
+.tiles.rows-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  overflow-y: auto;
+  align-content: normal;
+  margin-top: 32px;
+  padding-bottom: 8px;
+}
+
+.tile-row {
+  position: relative;
+}
+
+.tile-row-title {
+  font-size: calc(20px * var(--user-font-scale, 1));
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: var(--bg-text);
+}
+
+.tile-row-strip {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-behavior: smooth;
+}
+
+/* Floating "overlay" scrollbar: a slim pill that tracks scroll position and
+   fades in/out on its own, instead of a scrollbar permanently taking up
+   space under the row. */
+.row-scrollbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.row-scrollbar.visible {
+  opacity: 1;
+}
+
+.row-scrollbar-thumb {
+  position: absolute;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--text-dim);
+  opacity: 0.6;
+}
+
+.tile--row {
+  flex: 0 0 200px;
+  min-height: 140px;
+  padding: 20px;
+}
+
+.tile--row .tile-label {
+  font-size: calc(18px * var(--user-font-scale, 1));
+}
+
+/* ---- on-screen keyboard (Spotify search) ---- */
+.keyboard {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: rgba(0, 0, 0, 0.72);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+
+.keyboard.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.keyboard-preview {
+  min-width: 480px;
+  max-width: 80vw;
+  padding: 16px 28px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  font-size: calc(24px * var(--user-font-scale, 1));
+  color: var(--text);
+  text-align: center;
+}
+
+.keyboard-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.keyboard-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.keyboard-key {
+  min-width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 2px solid transparent;
+  color: var(--text);
+  font-size: calc(18px * var(--user-font-scale, 1));
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: transform 100ms ease, border-color 100ms ease, background 100ms ease;
+}
+
+.keyboard-key--wide {
+  min-width: 110px;
+  padding: 0 18px;
+  font-size: calc(15px * var(--user-font-scale, 1));
+}
+
+.keyboard-key.focused {
+  transform: scale(1.1);
+  border-color: var(--focus);
+  background: var(--surface-hover);
+}
+
+
+/* ---- weather widget styles (Settings → Weather widget) ----
+   'detailed' is the stacked default already defined above. These two
+   override only what differs, so the shared colour/scale rules still apply. */
+
+/* Compact: everything on one line, right-aligned with the rest of the bar. */
+.weather[data-style="compact"] {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.weather[data-style="compact"] .weather-condition,
+.weather[data-style="compact"] .weather-place {
+  margin: 0;
+}
+
+.weather[data-style="compact"] .weather-temp {
+  font-size: calc(30px * var(--user-font-scale, 1));
+}
+
+/* Minimal: temperature only. The other two lines are emptied by the
+   renderer as well, but hiding them here keeps their margins from
+   contributing any leftover space. */
+.weather[data-style="minimal"] .weather-condition,
+.weather[data-style="minimal"] .weather-place {
+  display: none;
+}
+
+/* Shuffle sits in the transport row but is a state toggle, not an action —
+   so it dims when off and picks up the accent colour when on. */
+.np-btn#np-shuffle {
+  opacity: 0.4;
+}
+
+.np-btn#np-shuffle.active {
+  opacity: 1;
+  color: var(--focus);
+}
+
+/* A tile's custom image (config.json `image`) sits in the same slot as the
+   built-in SVG icon, just a little larger since photos and logos need more
+   room to read than a line icon does. contain, not cover, so a non-square
+   logo isn't cropped. */
+.tile-icon--image {
+  width: 56px;
+  height: 56px;
+}
+
+.tile-icon--image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}

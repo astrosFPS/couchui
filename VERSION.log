@@ -1,0 +1,433 @@
+# CouchUI — Version Log
+
+Newest first. Entries cover user-facing changes, notable fixes, and
+anything that changes where files live or how things are configured.
+
+Versions before 0.1.0 are reconstructed retrospectively from the change
+history — they were not tagged at the time.
+
+Patch releases (0.8.1, 0.8.2, …) are the default, including for new
+features. The minor version is reserved for substantial milestones —
+a reworked subsystem, a breaking config change, or anything needing a
+migration step.
+
+---
+
+## 0.8.2
+
+* Added rotation to `error.log`: at 1 MB it rolls to `error.log.1`, keeping
+  one generation, so disk use is bounded at 2 MB. Without this a failure
+  that repeats every few seconds — like the Kodi AppArmor denial loop —
+  would grow the file indefinitely on a machine left running for months.
+* Changed the Kodi tile to the Flatpak build (`flatpak run tv.kodi.Kodi`).
+  The snap build's confinement blocked external drives, which is why it
+  couldn't read media from `/run/media`. `install.sh --apps` already
+  installed the Flatpak version and granted it filesystem access; the tile
+  now points at it.
+* Changed the Moonlight tile to its Flatpak build for the same consistency
+  with what the installer provides.
+
+## 0.8.1
+
+* Changed the versioning convention: patch bumps are now the default for
+  ordinary work, including new features, with the minor version reserved
+  for substantial milestones or anything needing a migration step.
+  Releases 0.1 through 0.8 landed in quick succession, which made the
+  minor number carry less meaning than it should.
+
+## 0.8.0
+
+* Rewrote `install.sh` as a bulk installer with composable flags:
+  `--deps`, `--apps`, `--firewall`, `--autostart`, `--shortcuts`, `--all`.
+  Every step is idempotent, so re-running is safe.
+* Added `--apps`, which installs the applications the tiles point at:
+  Brave (official apt repo), Kodi and Moonlight (Flatpak), Spotify
+  (official snap), plus KDE Connect, AntiMicroX, onboard and cec-utils.
+  Kodi is granted Flatpak access to `/run/media`, `/media` and home —
+  the snap build's confinement was what blocked external drives.
+* Added `--firewall`, opening TCP and UDP 1714-1764 for KDE Connect.
+* Changed the Electron sandbox fix to locate `chrome-sandbox` by searching
+  `node_modules` rather than assuming a fixed path, and to skip when the
+  permissions are already correct. It also reports clearly when Electron
+  hasn't finished downloading instead of failing.
+* Changed every generated file (the `couchui` command, the desktop entry,
+  the systemd unit) to use absolute paths derived from the script's own
+  location, so moving the project and re-running fixes all of them.
+* Removed `setup-shortcuts.sh` — folded into `install.sh --shortcuts` so
+  there's one entry point rather than two.
+* The installer does not rewrite `config.json`; it prints the commands the
+  Flatpak apps need and leaves the tile config alone.
+
+## 0.7.0
+
+* Added a **Phone remote** pane in Settings for KDE Connect pairing, so a
+  phone can be used as a trackpad and keyboard — the practical answer to
+  navigating web pages a controller can't. Lists devices with their state,
+  with Pair / Unpair / Test actions; unpair takes a second press to
+  confirm.
+* Added handling for KDE Connect not being installed: the pane shows the
+  install command and the firewall ports rather than reporting an error,
+  since that's a normal first-run state.
+* All KDE Connect actions go through `kdeconnect-cli`, which activates the
+  daemon itself, so there's no separate service for the launcher to start
+  or monitor.
+
+## 0.6.2
+
+* Fixed the progress bar appearing split into two pieces with a gap partway
+  along it. The fill animated its `width`, which forces a layout and repaint
+  every frame and left a visible unpainted seam on a 3px-tall bar. It now
+  animates `transform: scaleX()` instead, which is composited on the GPU
+  with no repaint, so there's nothing to tear. Measured from a screenshot:
+  the "dead sector" was a 3px band of the track colour showing through
+  between the old and new paint regions.
+* Added a volume popup to the Now Playing bar (🔊 button, or **V**). It
+  appears above the bar and captures input — left/right adjust in 5% steps,
+  other buttons are ignored — and dismisses on **B**/Escape or after 10
+  seconds without an adjustment, with the timer resetting on each change.
+  Held input is debounced to one API call at the final level.
+
+## 0.6.1
+
+* Added a **Connected devices** list at the top of Settings → Connections:
+  device name with its MAC address beneath, "Connected" state, and a
+  battery icon with percentage on the right, plus a Disconnect button.
+  Battery level comes from `bluetoothctl info` per device; peripherals
+  that don't report one show "No battery info" rather than a blank.
+* Added a **Web shortcuts** pane for adding, editing and removing web
+  tiles from the UI rather than hand-editing `config.json`. A bare domain
+  gets `https://` added, duplicate names are rejected, and removal needs a
+  second press to confirm. Saving only rewrites the `web-menu` submenu and
+  preserves everything else in the file, including the Spotify client ID.
+
+## 0.6.0
+
+* Added `"type": "web"` tiles — browser shortcuts that open a single site
+  in the browser's app mode (chromeless, no tabs or address bar) so it
+  behaves like a dedicated app. Browser flags live once in a top-level
+  `web` config block instead of being repeated per tile.
+* Added a **Web** submenu to the default config with YouTube (its D-pad TV
+  interface), Netflix and Twitch as examples.
+* Fixed launching any app from inside a submenu. The tile lookup used a
+  flat `find()` over top-level tiles only, so a nested tile failed with
+  "Unknown tile" — submenus shipped in 0.4.x but were never exercised with
+  a real app tile inside one. The lookup is now recursive.
+
+## 0.5.2
+
+* Fixed navigation stopping partway along a row, where left/right hit a
+  phantom "end of row" and up/down had to be used to reach the remaining
+  tiles. Row detection compared `offsetTop` for exact equality, so a single
+  pixel of difference — from a wrapped label, an uneven tile height, or
+  sub-pixel rounding — split one visual row into several logical ones. It
+  now groups tiles that overlap vertically (tolerance of half a tile
+  height), which is what "on the same row" actually means. Genuine
+  multi-row layouts still split correctly.
+  The same bug explained focus repeatedly jumping back to the first tile:
+  the short phantom rows clamped the column index to 0.
+* Fixed the tile row overflowing off the right of the screen, which left
+  the last tile clipped and unreachable. Grid items default to
+  `min-width: auto`, so a long label ("Android Apps") forced its column
+  wider than its share — the classic CSS grid blowout. Tiles now set
+  `min-width: 0` and long labels wrap instead of demanding width.
+
+## 0.5.1
+
+* Fixed the launcher continuing to navigate its own tile grid while a
+  launched app had focus — pressing a direction in Moonlight moved
+  CouchUI's selection underneath it at the same time. The Gamepad API
+  reports input regardless of which window is focused, and the poll loop
+  wasn't checking. Apps that take focus properly (Kodi) hid this; ones
+  that don't, exposed it.
+* Changed the controller status line to show when input has been handed to
+  a running app, and to clear held-button state so a button still pressed
+  when focus returns isn't read as a new press.
+* Added custom tile images: a tile can set `image` in `config.json` to any
+  local `.png`/`.jpg`/`.svg`/`.webp`, replacing its built-in icon. Paths
+  are relative to the app folder (`assets/tiles/...`), keeping
+  machine-specific paths out of config; absolute paths also work. A
+  missing file degrades to a plain tile and is logged rather than showing
+  a broken image.
+
+## 0.5.0
+
+* Added APK installation to the Waydroid hub: an **＋ Install APK** tile
+  opens a controller-navigable file browser starting in `~/Downloads`.
+  Built as a tile grid rather than the native file dialog, which is
+  mouse-and-keyboard only and unusable from a couch.
+* Added an APK-only filter as the default, with a toggle tile to show all
+  files. Folders are always listed so navigation still works; hidden files
+  are excluded either way, and `.APK` matches case-insensitively.
+* Changed the Waydroid hub to still render its grid when no apps are
+  installed. It previously replaced the whole grid with a message telling
+  you to install one from a terminal — which also hid the Install tile, at
+  exactly the moment it's most useful.
+* Install confirmation comes from re-querying the app list rather than the
+  command's exit code, so a listed app is real evidence it worked.
+
+## 0.4.3
+
+* Fixed the white native scrollbar showing down the right of the Spotify
+  home screen. The horizontal scrollbars on each row were hidden back in
+  0.0.3, but the vertical one on the container holding them never was.
+* Changed this to a house rule rather than another one-off: native
+  scrollbars are now hidden across the whole launcher via a `*` selector,
+  so a new scrolling container can't reintroduce one. The floating
+  `.row-scrollbar` is the pattern to use where an indicator is wanted.
+* Changed the settings window scrollbars to a slim themed style instead of
+  hiding them — it's a normal desktop window used with a mouse, so a
+  scrollbar is still useful there; it just shouldn't be the default white.
+
+## 0.4.2
+
+* Added `push.sh` — commits and pushes to your git remote, defaulting the
+  commit message to the current version so history lines up with this file.
+* Added a safety check to `push.sh` that refuses to push if `config.json`
+  has somehow become tracked by git. `.gitignore` only covers untracked
+  files, so a config committed before the ignore rule existed would keep
+  going out with every push; this catches that and explains how to undo it.
+
+## 0.4.1
+
+* Added `config.example.json` and a `.gitignore` that excludes
+  `config.json`, so the Spotify client ID and weather location stay local
+  and can't be committed by accident. The app creates `config.json` from
+  the example on first run, so a fresh clone still starts.
+* Added `.gitignore` entries for `node_modules/`, `error.log`, `dist/` and
+  editor noise.
+
+## 0.4.0
+
+* Fixed skip (next/previous) stopping playback instead of changing track.
+  Transport commands were sent without a device id, so Spotify applied them
+  to "the active device" — and when nothing was active, which is normal for
+  a client that just launched or went idle, the call failed and playback
+  simply stopped. Every command now names its device explicitly.
+* Fixed playback failing when Spotify wasn't already open. A freshly
+  launched client registers as a device slightly before it can accept
+  playback, and there was no retry, so the first attempt always lost that
+  race. Play now retries over a few seconds and transfers playback to the
+  device when it isn't the active one.
+* Fixed the lag before a track started. The device was rediscovered from
+  scratch on every action, costing several sequential API round trips
+  before any sound. It's now resolved once, cached, and kept in step with
+  whatever is actually playing.
+* Changed Premium-required errors (403) to fail immediately with a clear
+  message instead of being retried pointlessly.
+* Added a shuffle toggle to the Now Playing bar, saved as a preference and
+  applied when starting a playlist or album. It's set before playback
+  begins so the first track is already shuffled.
+* Added queueing — X on a track appends it to the up-next queue rather than
+  interrupting the current track — and an **Up Next** row on the Spotify
+  home screen showing what's coming.
+* Changed X to be contextual: pin on a playlist, queue on a track, toggle
+  shuffle anywhere else.
+
+## 0.3.3
+
+* Fixed city search failing with "fetch failed". The lookup was running in
+  the main process, which uses Node's network stack rather than Chromium's
+  and so doesn't share its proxy/DNS configuration — it can fail even when
+  the app reaches the network fine elsewhere. Moved it into the settings
+  renderer, the same place the weather lookup already fetches from.
+
+## 0.3.2
+
+* Fixed city search never returning results. API results were being passed
+  through a local text filter that expected a pre-built search string;
+  since they had none, every result was discarded and the list always read
+  "No matches." The filter is now skipped for results a server already
+  matched.
+* Changed the time zone list from all ~418 IANA zones to a curated ~56
+  covering the major population centres and every widely used offset. DST
+  still comes from Intl, so behaviour is unchanged for the zones that
+  remain. Extend `COMMON_TIMEZONES` in `main.js` to add more.
+* Changed a failed city lookup to say why (e.g. a network error) instead of
+  showing the same "No matches." as a genuinely unknown place.
+
+## 0.3.1
+
+* Reverted the resolution scaling introduced and then withdrawn during
+  0.3.0 — it broke the layout. Sizes are back to their fixed values, with
+  the Settings → Appearance font-size slider as the only scaling control.
+  To be revisited.
+
+## 0.3.0
+
+* Added a **Location** tab in Settings: a searchable time zone picker
+  covering all ~418 IANA zones, 12/24-hour clock format, and a
+  seconds toggle. Daylight saving is applied automatically — the zone
+  database and its DST rules come from `Intl`, so there's nothing bundled
+  to go stale.
+* Added a searchable city picker for the weather location (Open-Meteo
+  geocoding, no API key), replacing hand-editing latitude/longitude in
+  `config.json`. Choosing a city also sets the matching time zone.
+* Added a **Weather widget** tab: three layout styles (Detailed, Compact,
+  Minimal), Celsius/Fahrenheit, and independent toggles for the weather
+  icon, condition text, location name, feels-like temperature, humidity,
+  and wind speed. Only the fields actually being shown are requested from
+  the API.
+* Changed the clock to only tick every second when seconds are actually
+  displayed, rather than always.
+* Changed weather failures to log to `error.log` instead of being
+  swallowed silently.
+
+## 0.2.0
+
+* Renamed the project from CouchTato to CouchUI. This covers the display
+  name, the npm package name (`couch-launcher` → `couch-ui`), the project
+  folder (`tv-launcher` → `couch-ui`), and the systemd service
+  (`couch-launcher.service` → `couch-ui.service`).
+
+**Migrating an existing install.** Electron derives its settings directory
+from the package name, so the rename moves it from
+`~/.config/couch-launcher/` to `~/.config/couch-ui/`. Your theme,
+background, font, update and pinned-playlist settings live there, as does
+your Spotify login. Carry them over before first launch:
+
+```bash
+mv ~/.config/couch-launcher ~/.config/couch-ui
+```
+
+Skip this and nothing breaks — you'll just start from defaults and need to
+sign into Spotify again.
+
+If you had autostart enabled, retire the old service too:
+
+```bash
+systemctl --user disable --now couch-launcher.service
+rm -f ~/.config/systemd/user/couch-launcher.service
+./install.sh   # re-registers it as couch-ui.service
+```
+
+## 0.1.1
+
+* Fixed music not playing unless Spotify was already open before starting
+  the launcher. The Web API can only control a player that already exists,
+  so from a cold start there was nothing to play on. CouchUI now starts
+  the Spotify desktop client itself on the first play (or first press of Y)
+  and waits for it to register as a Connect device before playing.
+* Added `spotify.launchCommand` to `config.json` for setups where the
+  desktop client installs under a different command name.
+* Changed the "no device found" error into specific, actionable messages —
+  distinguishing "Spotify isn't installed / wrong command name" from
+  "Spotify started but was too slow to come online".
+
+## 0.1.0
+
+* Added adaptive text color for image backgrounds: the background image is
+  sampled (downscaled to 32x32 off-screen, ~1ms, once per image load) and
+  clock, weather, and the footer hint legend each get their own text color
+  based on what's actually behind them. Runs per image, so slideshows
+  re-evaluate on every change.
+* Added high-variance detection for background regions — where a region is
+  too visually busy for any single text color to work across it, that text
+  gets a stronger shadow instead of a color that only half-works.
+* Fixed the black/white text threshold, which was set to an
+  intuitive-looking 0.4 but is mathematically 0.179 (the luminance where
+  black and white give equal contrast). The old value picked white text on
+  mid-gray backgrounds at 3.95:1 where black would have given 5.32:1. This
+  also affected solid-color backgrounds, not just images.
+* Added this version log.
+
+## 0.0.9
+
+* Reverted the packaging work (AppImage/.deb/.rpm builds, electron-builder,
+  desktop entry) — back to running from source with `npm start`.
+* Reverted `config.json` to living in the app folder. It had been moved to
+  the userData folder only because a system-installed app can't write to
+  its own install directory; with packaging gone, the indirection had no
+  purpose.
+
+## 0.0.8
+
+* Added a Settings → Updates tab: current version, last-checked time, a
+  "Search for update" button, and an automatic-updates toggle backed by a
+  24h scheduler that survives restarts.
+* Added `updater.js` as a deliberate stub — the surrounding wiring is
+  complete and calls it, so filling in the real check is a one-file change.
+  See DOCUMENTATION.md §3.8.
+
+## 0.0.7
+
+* Added a "Recently Played Songs" row to the Spotify home screen —
+  individual tracks, as distinct from "Jump back in", which groups by the
+  playlist/album a track was played from.
+* Added playlist pinning: pinned playlists sort to the front of "Your
+  Playlists" and are marked. Bound to X on the controller and the X key.
+* Fixed Spotify tiles stretching to absurd heights on long playlist names —
+  titles now clamp to two lines, subtitles to one, and the text panel has a
+  fixed height so tiles in a row stay uniform.
+* Fixed text and icons (including the settings cog and power button) going
+  unreadable in Light mode with a solid-color background. The auto-contrast
+  color was being applied globally, including to elements sitting on their
+  own opaque panel where it never belonged. Split into two independent
+  variable sets: one for panel text, one for text sitting directly on the
+  background.
+* Removed the track count from playlist tiles.
+
+## 0.0.6
+
+* Moved the Now Playing bar above the footer hint legend.
+* Added a progress bar to the Now Playing bar, above the track name.
+* Changed the play/pause button to reflect actual state — a pause icon when
+  playing, a play icon when paused, instead of a static combined icon.
+
+## 0.0.5
+
+* Added accent icons to the main tiles (browser, Spotify, controller, movie
+  clapperboard, folder), colored per-tile and legible in both themes.
+* Added tile icon support to `config.json` via an `icon` field.
+* Fixed the Kodi tile not launching — the kodi-omega snap installs its
+  binary as `kodi-omega`, not `kodi`.
+* Fixed `vaInitialize failed` warnings on startup in VMs. Disabling hardware
+  acceleration alone didn't stop it; VAAPI decode/encode is a separate
+  Chromium feature that probes independently and had to be disabled too.
+
+## 0.0.4
+
+* Added custom backgrounds: solid color (preset palette), single image, or
+  a slideshow with configurable interval and crossfade duration.
+* Added font customization — four bundled OFL-licensed families (Roboto,
+  Open Sans, Merriweather, JetBrains Mono), custom font upload, plus size,
+  color, and opacity. Defaults are unchanged unless explicitly set.
+* Added submenu support: a tile with `"type": "submenu"` opens a nested
+  grid, supporting arbitrary nesting for grouping apps.
+* Fixed Light mode washing out custom backgrounds — the scrim was near-opaque
+  and theme-colored; it's now a light legibility aid that leaves the
+  background visible.
+* Fixed long CPU names clipping in the Settings window (a flexbox
+  `min-width: 0` overflow issue).
+* Fixed accent colors shifting slightly between Dark and Light themes; they
+  now share one definition. Light mode's text color was also darkened from a
+  washed-out charcoal toward true black.
+
+## 0.0.3
+
+* Added a Spotify home screen with horizontally scrolling rows: search,
+  Jump back in, Your Playlists, and mood/genre rows.
+* Added Spotify search with an on-screen controller-navigable keyboard;
+  physical keyboards can type directly.
+* Added a floating overlay scrollbar for Spotify rows, replacing the
+  permanent native scrollbar.
+* Changed search result order to Tracks, Albums, then Playlists.
+
+## 0.0.2
+
+* Changed all on-screen error reporting to write to `error.log` instead —
+  errors previously appeared as toasts or raw command output dumped over the
+  tile grid.
+* Added catch-all handlers so uncaught exceptions and rejected promises are
+  logged rather than lost.
+* Fixed Restart and Shutdown doing nothing from the power menu. Two stacked
+  bugs: the command was spawned detached and reported success without
+  waiting, and the caller never checked the result — so failures were
+  invisible at both layers.
+
+## 0.0.1
+
+* Changed the Spotify Now Playing bar from a permanent fixture to a floating
+  overlay that appears while playing and fades out after pausing.
+* Replaced the local-file/VLC browsing hub with a plain Kodi launch tile —
+  Kodi already provides a full library UI (posters, resume, watched state),
+  so there was nothing worth rebuilding around it.

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Settings</title>
+  <link rel="stylesheet" href="../renderer/theme.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="shell">
+    <nav class="sidebar">
+      <div class="nav-item active" data-pane="info">Info</div>
+      <div class="nav-item" data-pane="connections">Connections</div>
+      <div class="nav-item" data-pane="storage">Storage</div>
+      <div class="nav-item" data-pane="location">Location</div>
+      <div class="nav-item" data-pane="appearance">Appearance</div>
+      <div class="nav-item" data-pane="phone">Phone remote</div>
+      <div class="nav-item" data-pane="shortcuts">Web shortcuts</div>
+      <div class="nav-item" data-pane="weather">Weather widget</div>
+      <div class="nav-item" data-pane="updates">Updates</div>
+    </nav>
+
+    <main class="pane-area">
+      <!-- Info -->
+      <section class="pane active" id="pane-info">
+        <h1>Info</h1>
+        <div class="info-grid" id="info-grid">
+          <div class="info-row"><span class="info-label">IP Address</span><span class="info-value" id="info-ip">—</span></div>
+          <div class="info-row"><span class="info-label">Hostname</span><span class="info-value" id="info-hostname">—</span></div>
+          <div class="info-row"><span class="info-label">CPU</span><span class="info-value" id="info-cpu">—</span></div>
+          <div class="info-row"><span class="info-label">CPU Usage</span><span class="info-value" id="info-cpu-usage">—</span></div>
+          <div class="info-row"><span class="info-label">RAM</span><span class="info-value" id="info-ram">—</span></div>
+        </div>
+      </section>
+
+      <!-- Connections -->
+      <section class="pane" id="pane-connections">
+        <h1>Connections</h1>
+
+        <div class="sub-section">
+          <div class="sub-header">
+            <h2>Wi-Fi</h2>
+            <label class="switch">
+              <input type="checkbox" id="wifi-toggle" />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+          <div class="list" id="wifi-list"></div>
+        </div>
+
+        <div class="sub-section">
+          <h2>Connected devices</h2>
+          <div class="list" id="bt-connected-list"></div>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-header">
+            <h2>Bluetooth</h2>
+            <label class="switch">
+              <input type="checkbox" id="bt-toggle" />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+          <button class="btn" id="bt-scan-btn">Scan for devices</button>
+          <div class="list" id="bt-list"></div>
+        </div>
+      </section>
+
+      <!-- Storage -->
+      <section class="pane" id="pane-storage">
+        <h1>Storage</h1>
+        <div class="list" id="storage-list"></div>
+      </section>
+
+      <!-- Location -->
+      <section class="pane" id="pane-location">
+        <h1>Location</h1>
+
+        <div class="sub-section">
+          <h2>Time zone</h2>
+          <p class="hint-text">Daylight saving is applied automatically for whichever zone you pick.</p>
+          <div class="combo" id="tz-combo">
+            <input type="text" id="tz-search" class="combo-input" placeholder="Search time zones…" autocomplete="off" />
+            <div class="combo-list" id="tz-list"></div>
+          </div>
+          <p class="hint-text" id="tz-current"></p>
+        </div>
+
+        <div class="sub-section">
+          <h2>Clock</h2>
+          <div class="font-row">
+            <label>Format</label>
+            <select id="clock-format">
+              <option value="auto">Automatic</option>
+              <option value="12">12-hour</option>
+              <option value="24">24-hour</option>
+            </select>
+          </div>
+          <div class="sub-header">
+            <span class="hint-text">Show seconds</span>
+            <label class="switch">
+              <input type="checkbox" id="clock-seconds" />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="sub-section">
+          <h2>Weather location</h2>
+          <p class="hint-text">Used for the weather widget on the home screen.</p>
+          <div class="combo" id="city-combo">
+            <input type="text" id="city-search" class="combo-input" placeholder="Search for a city…" autocomplete="off" />
+            <div class="combo-list" id="city-list"></div>
+          </div>
+          <p class="hint-text" id="city-current"></p>
+        </div>
+      </section>
+
+      <!-- Appearance -->
+      <section class="pane" id="pane-appearance">
+        <h1>Appearance</h1>
+
+        <div class="sub-section">
+          <h2>Theme</h2>
+          <div class="theme-options">
+            <button class="theme-btn" data-theme="dark">Dark</button>
+            <button class="theme-btn" data-theme="light">Light</button>
+          </div>
+        </div>
+
+        <div class="sub-section">
+          <h2>Background</h2>
+          <p class="hint-text">Shown behind the main launcher screen.</p>
+          <div class="theme-options" id="bg-mode-options">
+            <button class="theme-btn" data-bg-mode="theme">Theme default</button>
+            <button class="theme-btn" data-bg-mode="color">Solid color</button>
+            <button class="theme-btn" data-bg-mode="image">Image</button>
+            <button class="theme-btn" data-bg-mode="slideshow">Slideshow</button>
+          </div>
+
+          <div class="bg-mode-panel" id="bg-panel-color">
+            <p class="hint-text">A small set of presets that read well in both Dark and Light theme.</p>
+            <div class="color-swatch-row" id="color-swatch-row"></div>
+          </div>
+
+          <div class="bg-mode-panel" id="bg-panel-image">
+            <div class="wallpaper-row">
+              <button class="btn" id="choose-image-btn">Choose image…</button>
+            </div>
+            <div class="wallpaper-path" id="image-path"></div>
+          </div>
+
+          <div class="bg-mode-panel" id="bg-panel-slideshow">
+            <div class="wallpaper-row">
+              <button class="btn" id="add-slideshow-images-btn">Add images…</button>
+            </div>
+            <div class="list" id="slideshow-list"></div>
+            <div class="font-row">
+              <label>Show each image for</label>
+              <input type="number" id="slideshow-interval" min="1" step="1" style="width:70px" />
+              <span>seconds</span>
+            </div>
+            <div class="font-row">
+              <label>Fade between images over</label>
+              <input type="number" id="slideshow-fade" min="0" step="0.5" style="width:70px" />
+              <span>seconds</span>
+            </div>
+          </div>
+
+          <button class="btn btn-secondary" id="clear-background-btn" style="margin-top:12px">Reset to theme default</button>
+        </div>
+
+        <div class="sub-section">
+          <h2>Font</h2>
+          <p class="hint-text">Leave on Default to keep the app's current font unchanged.</p>
+
+          <div class="font-row">
+            <label>Family</label>
+            <select id="font-family-select">
+              <option value="system">Default</option>
+              <option value="roboto">Roboto</option>
+              <option value="open-sans">Open Sans</option>
+              <option value="merriweather">Merriweather</option>
+              <option value="jetbrains-mono">JetBrains Mono</option>
+              <option value="custom">Custom (uploaded)</option>
+            </select>
+            <button class="btn btn-small" id="upload-font-btn">Upload font file…</button>
+          </div>
+          <div class="hint-text" id="custom-font-name"></div>
+
+          <div class="font-row">
+            <label>Size</label>
+            <input type="range" id="font-scale" min="80" max="150" step="5" />
+            <span id="font-scale-value">100%</span>
+          </div>
+
+          <div class="font-row">
+            <label>Color</label>
+            <input type="color" id="font-color" />
+            <button class="btn btn-small btn-secondary" id="font-color-reset-btn">Use theme color</button>
+          </div>
+
+          <div class="font-row">
+            <label>Opacity</label>
+            <input type="range" id="font-opacity" min="50" max="100" step="5" />
+            <span id="font-opacity-value">100%</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Phone remote (KDE Connect) -->
+      <section class="pane" id="pane-phone">
+        <h1>Phone remote</h1>
+        <p class="hint-text">Pair your phone with KDE Connect to use it as a trackpad and keyboard — useful for web pages a controller can't navigate.</p>
+
+        <div class="sub-section" id="kde-missing" style="display:none">
+          <div class="empty-note">
+            KDE Connect isn't installed. Install it, then reopen this page:
+            <br /><br />
+            <code>sudo apt install kdeconnect</code>
+            <br /><br />
+            You'll also need the KDE Connect app on your phone, on the same
+            Wi-Fi network.
+          </div>
+        </div>
+
+        <div class="sub-section" id="kde-main">
+          <div class="wallpaper-row">
+            <button class="btn" id="kde-refresh-btn">Search for devices</button>
+          </div>
+          <div class="list" id="kde-list"></div>
+          <p class="hint-text" id="kde-status"></p>
+        </div>
+
+        <div class="sub-section" id="kde-help" style="display:none">
+          <h2>Using it as a mouse</h2>
+          <p class="hint-text">
+            Once paired, open KDE Connect on your phone, select this machine,
+            and choose <strong>Remote input</strong>. Swipe to move the
+            pointer, tap to click, and use the keyboard button to type.
+          </p>
+          <p class="hint-text">
+            If the phone can't find this machine, the firewall is the usual
+            cause — KDE Connect needs ports 1714–1764 (TCP and UDP):
+            <br /><code>sudo ufw allow 1714:1764/udp &amp;&amp; sudo ufw allow 1714:1764/tcp</code>
+          </p>
+        </div>
+      </section>
+
+      <!-- Web shortcuts -->
+      <section class="pane" id="pane-shortcuts">
+        <h1>Web shortcuts</h1>
+        <p class="hint-text">Sites opened as their own chromeless window. They appear in the <strong>Web</strong> tile on the home screen.</p>
+
+        <div class="sub-section">
+          <div class="list" id="shortcut-list"></div>
+        </div>
+
+        <div class="sub-section">
+          <h2 id="shortcut-form-title">Add a shortcut</h2>
+          <div class="font-row">
+            <label>Name</label>
+            <input type="text" id="shortcut-label" placeholder="YouTube" style="flex:1;max-width:260px" />
+          </div>
+          <div class="font-row">
+            <label>URL</label>
+            <input type="text" id="shortcut-url" placeholder="youtube.com/tv" style="flex:1;max-width:340px" />
+          </div>
+          <div class="font-row">
+            <label>Caption</label>
+            <input type="text" id="shortcut-subtitle" placeholder="Optional" style="flex:1;max-width:260px" />
+          </div>
+          <div class="font-row">
+            <label>Colour</label>
+            <input type="color" id="shortcut-color" value="#E8622C" />
+          </div>
+          <div class="wallpaper-row" style="margin-top:14px">
+            <button class="btn" id="shortcut-save-btn">Save shortcut</button>
+            <button class="btn btn-secondary" id="shortcut-cancel-btn" style="display:none">Cancel edit</button>
+          </div>
+          <p class="hint-text" id="shortcut-status"></p>
+        </div>
+      </section>
+
+      <!-- Weather widget -->
+      <section class="pane" id="pane-weather">
+        <h1>Weather widget</h1>
+
+        <div class="sub-section">
+          <h2>Style</h2>
+          <div class="theme-options" id="weather-style-options">
+            <button class="theme-btn" data-weather-style="detailed">Detailed</button>
+            <button class="theme-btn" data-weather-style="compact">Compact</button>
+            <button class="theme-btn" data-weather-style="minimal">Minimal</button>
+          </div>
+          <p class="hint-text">Detailed stacks everything; Compact puts it on one line; Minimal is just the temperature.</p>
+        </div>
+
+        <div class="sub-section">
+          <h2>Units</h2>
+          <div class="theme-options" id="weather-unit-options">
+            <button class="theme-btn" data-weather-units="celsius">Celsius</button>
+            <button class="theme-btn" data-weather-units="fahrenheit">Fahrenheit</button>
+          </div>
+        </div>
+
+        <div class="sub-section">
+          <h2>Shown information</h2>
+          <p class="hint-text" id="weather-fields-note"></p>
+          <div class="sub-header"><span class="hint-text">Weather icon</span>
+            <label class="switch"><input type="checkbox" data-weather-field="showIcon" /><span class="switch-track"></span></label></div>
+          <div class="sub-header"><span class="hint-text">Condition text</span>
+            <label class="switch"><input type="checkbox" data-weather-field="showCondition" /><span class="switch-track"></span></label></div>
+          <div class="sub-header"><span class="hint-text">Location name</span>
+            <label class="switch"><input type="checkbox" data-weather-field="showLocation" /><span class="switch-track"></span></label></div>
+          <div class="sub-header"><span class="hint-text">Feels-like temperature</span>
+            <label class="switch"><input type="checkbox" data-weather-field="showFeelsLike" /><span class="switch-track"></span></label></div>
+          <div class="sub-header"><span class="hint-text">Humidity</span>
+            <label class="switch"><input type="checkbox" data-weather-field="showHumidity" /><span class="switch-track"></span></label></div>
+          <div class="sub-header"><span class="hint-text">Wind speed</span>
+            <label class="switch"><input type="checkbox" data-weather-field="showWind" /><span class="switch-track"></span></label></div>
+        </div>
+      </section>
+
+      <!-- Updates -->
+      <section class="pane" id="pane-updates">
+        <h1>Updates</h1>
+
+        <div class="info-grid">
+          <div class="info-row"><span class="info-label">Current version</span><span class="info-value" id="update-current-version">—</span></div>
+          <div class="info-row"><span class="info-label">Last checked</span><span class="info-value" id="update-last-checked">Never</span></div>
+        </div>
+
+        <div class="sub-section">
+          <button class="btn" id="check-update-btn">Search for update</button>
+          <p class="hint-text" id="update-status"></p>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-header">
+            <h2>Automatic updates</h2>
+            <label class="switch">
+              <input type="checkbox" id="auto-update-toggle" />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+          <p class="hint-text">Checks for an update on a schedule in the background, without needing to open Settings.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
